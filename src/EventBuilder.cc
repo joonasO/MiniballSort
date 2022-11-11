@@ -13,6 +13,9 @@ MiniballEventBuilder::MiniballEventBuilder( std::shared_ptr<MiniballSettings> my
 	
 	// Progress bar starts as false
 	_prog_ = false;
+	
+	// Start at MBS event 0
+	preveventid = 0;
 
 	// ------------------------------- //
 	// Initialise variables and flags  //
@@ -123,6 +126,7 @@ void MiniballEventBuilder::SetInputFile( std::string input_file_name ) {
 	
 	// Set the input tree
 	SetInputTree( (TTree*)input_file->Get("mb_sort") );
+	SetMBSInfoTree( (TTree*)input_file->Get("mbsinfo") );
 	StartFile();
 
 	return;
@@ -139,6 +143,18 @@ void MiniballEventBuilder::SetInputTree( TTree *user_tree ){
 	return;
 	
 }
+
+void MiniballEventBuilder::SetMBSInfoTree( TTree *user_tree ){
+	
+	// Find the tree and set branch addresses
+	mbsinfo_tree = user_tree;
+	mbs_info = nullptr;
+	mbsinfo_tree->SetBranchAddress( "mbsinfo", &mbs_info );
+
+	return;
+	
+}
+
 
 void MiniballEventBuilder::SetOutput( std::string output_file_name ) {
 
@@ -1100,6 +1116,9 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 
 	std::cout << " Event Building: number of entries in input tree = ";
 	std::cout << n_entries << std::endl;
+	
+	std::cout << "\tnumber of MBS Events/triggers in input tree = ";
+	std::cout << mbsinfo_tree->GetEntries() << std::endl;
 
 	
 	// ------------------------------------------------------------------------ //
@@ -1110,17 +1129,56 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 		// Current event data
 		//if( input_tree->MemoryFull(30e6) )
 		//	input_tree->DropBaskets();
-		if( i == 0 ) input_tree->GetEntry(i);
+		
+		// First event, yes please!
+		if( i == 0 ){
+			
+			input_tree->GetEntry(i);
+			myeventid = in_data->GetEventID();
+			
+			// Try to get the MBS info event with the index
+			if( mbsinfo_tree->GetEntryWithIndex( myeventid ) < 0 ) {
+
+				// Look for the matches MBS Info event if we didn't match automatically
+				for( long j = 0; j < mbsinfo_tree->GetEntries(); ++j ){
+					
+					mbsinfo_tree->GetEntry(j);
+					if( mbs_info->GetEventID() == myeventid ) {
+						myeventtime = mbs_info->GetTime();
+						break;
+					}
+					
+					// Panic if we failed!
+					std::cerr << "Didn't find matching MBS Event IDs at start of the file: ";
+					std::cerr << myeventid << std::endl;
+					
+				}
+				
+			}
+			
+			std::cout << "MBS Trigger time = " << myeventtime << std::endl;
+
+		}
 
 		// Get the time of the event
-		mytime = in_data->GetTime();
+		//mytime = in_data->GetTime(); // this is normal
+		myhittime = in_data->GetTime();	// this is for is697
+		mytime = myeventtime + myhittime; // this is for is697
 				
 		// check time stamp monotonically increases!
-		if( time_prev > mytime ) {
+		//if( time_prev > mytime ) {
+		//
+		//	std::cout << "Out of order event in file ";
+		//	std::cout << input_tree->GetName() << std::endl;
+		//
+		//}
 			
-			std::cout << "Out of order event in file ";
+		// check time stamp monotonically increases!
+		if( preveventid > myeventid ) {
+		
+			std::cout << "Out of order event " << myeventid << " in file ";
 			std::cout << input_tree->GetName() << std::endl;
-			
+		
 		}
 			
 		// record time of this event
@@ -1409,20 +1467,62 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 		//------------------------------
 		
 		if( input_tree->GetEntry(i+1) ) {
+			
+			// Get the next MBS event ID
+			preveventid = myeventid;
+			myeventid = in_data->GetEventID();
+
+			// If the next MBS event ID is the same, carry on
+			// If not, we have to go look for the next trigger time
+			if( myeventid != preveventid ) {
+				
+				// Close the event
+				flag_close_event = true;
+				
+				// And find the next MBS event ID
+				if( mbsinfo_tree->GetEntryWithIndex( myeventid ) < 0 ) {
+					
+					std::cerr << "MBS Event " << myeventid << " not found by index, looking up manually" << std::endl;
+					
+					// Look for the matches MBS Info event if we didn't match automatically
+					for( long j = 0; j < mbsinfo_tree->GetEntries(); ++j ){
 						
-			time_diff = in_data->GetTime() - time_first;
+						mbsinfo_tree->GetEntry(j);
+						if( mbs_info->GetEventID() == myeventid ) {
+							myeventtime = mbs_info->GetTime();
+							break;
+						}
+						
+						// Panic if we failed!
+						std::cerr << "Didn't find matching MBS Event IDs at start of the file: ";
+						std::cerr << myeventid << std::endl;
+					}
+					
+				}
+
+				else myeventtime = mbs_info->GetTime();
+				
+			}
+			
+			// BELOW IS THE TIME-ORDERED METHOD!
+			
+			// Get next time
+			//time_diff = in_data->GetTime() - time_first;
+			myhittime = in_data->GetTime();
+			mytime = myhittime + myeventtime;
+			time_diff = mytime - time_first;
 
 			// window = time_stamp_first + time_window
-			if( time_diff > build_window )
-				flag_close_event = true; // set flag to close this event
+			//if( time_diff > build_window )
+			//	flag_close_event = true; // set flag to close this event
 
 			// we've gone on to the next file in the chain
-			else if( time_diff < 0 )
-				flag_close_event = true; // set flag to close this event
+			//else if( time_diff < 0 )
+			//	flag_close_event = true; // set flag to close this event
 				
 			// Fill tdiff hist only for real data
 			if( !in_data->IsInfo() ) {
-				
+			
 				tdiff->Fill( time_diff );
 				if( !mythres )
 					tdiff_clean->Fill( time_diff );

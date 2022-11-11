@@ -3,6 +3,7 @@
 ClassImp(FebexData)
 ClassImp(InfoData)
 ClassImp(MiniballDataPackets)
+ClassImp(MBSInfoPackets)
 
 FebexData::FebexData( unsigned long long t, unsigned long long id,
 					unsigned int qi, Float16_t qh, unsigned short qs,
@@ -13,10 +14,8 @@ FebexData::FebexData( unsigned long long t, unsigned long long id,
 					sfp(s), board(b), ch(c), thres(th), veto(v), fail(f), pileup(p) {}
 
 InfoData::InfoData( unsigned long long t, unsigned long long id, unsigned char c,
-				   unsigned char s, unsigned char b ) :
+				    unsigned char s, unsigned char b ) :
 					time(t), eventid(id), code(c), sfp(s), board(b) {}
-
-
 
 void MiniballDataPackets::SetData( std::shared_ptr<FebexData> data ){
 	

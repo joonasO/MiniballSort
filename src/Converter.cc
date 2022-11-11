@@ -53,21 +53,26 @@ void MiniballConverter::MakeTree() {
 	const int splitLevel = 2; // don't split branches = 0, full splitting = 99
 	const int bufsize = sizeof(FebexData) + sizeof(InfoData);
 	output_tree = new TTree( "mb", "mb" );
+	mbsinfo_tree = new TTree( "mbsinfo", "mbsinfo" );
 	data_packet = std::make_unique<MiniballDataPackets>();
+	mbsinfo_packet = std::make_unique<MBSInfoPackets>();
 	output_tree->Branch( "data", "MiniballDataPackets", data_packet.get(), bufsize, splitLevel );
+	mbsinfo_tree->Branch( "mbsinfo", "MBSInfoPackets", mbsinfo_packet.get(), sizeof(MBSInfoPackets), 0 );
 
-	sorted_tree = (TTree*)output_tree->CloneTree(0);
-	sorted_tree->SetName("mb_sort");
-	sorted_tree->SetTitle( "Time sorted, calibrated Miniball data" );
-	sorted_tree->SetDirectory( output_file->GetDirectory("/") );
+	//sorted_tree = (TTree*)output_tree->CloneTree(0); // needed for time-ordering
+	//sorted_tree->SetName("mb_sort");
+	//sorted_tree->SetTitle( "Time sorted, calibrated Miniball data" );
+	//sorted_tree->SetDirectory( output_file->GetDirectory("/") );
 	output_tree->SetDirectory( output_file->GetDirectory("/") );
-	
+	mbsinfo_tree->SetDirectory( output_file->GetDirectory("/") );
+
 	output_tree->SetAutoFlush(-10e6);
-	sorted_tree->SetAutoFlush(-10e6);
+	//sorted_tree->SetAutoFlush(-10e6);
+	mbsinfo_tree->SetAutoFlush(-10e6);
 
 	febex_data = std::make_shared<FebexData>();
 	info_data = std::make_shared<InfoData>();
-	
+
 	febex_data->ClearData();
 	info_data->ClearData();
 	
@@ -302,7 +307,20 @@ void MiniballConverter::ResetHists() {
 
 unsigned long long MiniballConverter::SortTree(){
 	
-	// Reset the sorted tree so it's empty before we start
+	// If we are not time-ordering, we just clone the tree
+	sorted_tree = (TTree*)output_tree->CloneTree();
+
+	sorted_tree->SetName("mb_sort");
+	sorted_tree->SetTitle( "Time sorted, calibrated Miniball data" );
+	sorted_tree->SetDirectory( output_file->GetDirectory("/") );
+
+	mbsinfo_tree->BuildIndex( "mbsinfo.GetEventID()" );
+	//mbsinfo_tree->Write();
+	
+	return sorted_tree->GetEntries();
+	
+	
+/*	// Reset the sorted tree so it's empty before we start
 	sorted_tree->Reset();
 	
 	// Load the full tree if possible
@@ -380,6 +398,7 @@ unsigned long long MiniballConverter::SortTree(){
 	output_tree->Reset();
 
 	return nb_idx;
+*/
 	
 }
 

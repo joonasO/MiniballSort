@@ -170,13 +170,17 @@ void MiniballMbsConverter::ProcessFebexData( UInt_t &pos ) {
 				
 				// Make a FebexData item
 				febex_data->SetQint( my_adc_data_int );
-				febex_data->SetTime( my_tm_stp + my_hit_time );
+				//febex_data->SetTime( my_tm_stp + my_hit_time );
+				febex_data->SetTime( my_hit_time );
+				febex_data->SetEventID( my_event_id );
 				febex_data->SetSfp( my_sfp_id );
 				febex_data->SetBoard( my_board_id );
 				febex_data->SetChannel( my_hit_ch_id );
 				febex_data->SetFail( 0 );
 				febex_data->SetVeto( 0 );
 				febex_data->SetPileUp( more_than_1_hit_in_cha );
+				
+				if( my_sfp_id == 1 ) my_good_tm_stp = my_tm_stp;
 				
 				// Close the data packet and clean up
 				FinishFebexData();
@@ -274,7 +278,8 @@ void MiniballMbsConverter::ProcessFebexData( UInt_t &pos ) {
 
 			// Make a FebexData item
 			febex_data->SetQint( mwd.GetEnergy(i) );
-			febex_data->SetTime( my_tm_stp ); // TODO: Timestamp of trace
+			febex_data->SetTime( my_tm_stp + mwd.GetCfdTime(i) );
+			febex_data->SetEventID( my_event_id );
 			febex_data->SetSfp( my_sfp_id );
 			febex_data->SetBoard( my_board_id );
 			febex_data->SetChannel( my_ch_id );
@@ -389,6 +394,7 @@ void MiniballMbsConverter::FinishFebexData(){
 	if( flag_febex_info ) {
 		
 		info_data->SetTime( time_corr );
+		info_data->SetEventID( febex_data->GetEventID() );
 		info_data->SetSfp( febex_data->GetSfp() );
 		info_data->SetBoard( febex_data->GetBoard() );
 		info_data->SetCode( my_info_code );
@@ -398,7 +404,7 @@ void MiniballMbsConverter::FinishFebexData(){
 	}
 	
 	// Otherwise it is real data, so fill a FEBEX event
-	else if( flag_febex_data0 || flag_febex_trace ) {
+	else if( flag_febex_data0 ) {
 		
 		// Calibrate
 		my_energy = cal->FebexEnergy( febex_data->GetSfp(), febex_data->GetBoard(), febex_data->GetChannel(), febex_data->GetQint() );
@@ -408,17 +414,24 @@ void MiniballMbsConverter::FinishFebexData(){
 		else
 			febex_data->SetThreshold( false );
 		
-		// Fill histograms
 		hfebex_cal[febex_data->GetSfp()][febex_data->GetBoard()][febex_data->GetChannel()]->Fill( my_energy );
-		if( flag_febex_data0 ) hfebex[febex_data->GetSfp()][febex_data->GetBoard()][febex_data->GetChannel()]->Fill( febex_data->GetQint() );
-		else if( flag_febex_trace ) hfebex_mwd[febex_data->GetSfp()][febex_data->GetBoard()][febex_data->GetChannel()]->Fill( febex_data->GetQint() );
-		
+		hfebex[febex_data->GetSfp()][febex_data->GetBoard()][febex_data->GetChannel()]->Fill( febex_data->GetQint() );
+
 		// Set this data and fill event to tree
 		// Also add the time offset when we do this
 		febex_data->SetTime( time_corr );
 		data_packet->SetData( febex_data );
 		output_tree->Fill();
 
+	}
+	
+	// Otherwise it is coming from a trace and the MWD
+	else if( flag_febex_trace ) {
+		
+		// TODO: Find a safe way to put these in the event stream (requires separate energy calibration)
+		hfebex_mwd[febex_data->GetSfp()][febex_data->GetBoard()][febex_data->GetChannel()]->Fill( febex_data->GetQint() );
+		return;
+		
 	}
 
 	// Fill histograms
@@ -518,14 +531,20 @@ int MiniballMbsConverter::ConvertFile( std::string input_file_name,
 		// Get the next event - returns nullptr at the end of the file
 		ev = mbs.GetNextEvent();
 		if( !ev ) break;
-
+		my_event_id = ev->GetEventID();
+		
+		// Write the MBS event info
+		mbsinfo_packet->SetTime( my_good_tm_stp );
+		mbsinfo_packet->SetEventID( my_event_id );
+		mbsinfo_tree->Fill();
+		
 		// Check if we are before the start sub event or after the end sub events
 		if( mbsevt < start_subevt || ( (long)mbsevt > end_subevt && end_subevt > 0 ) )
 			continue;
 
 		// Process current block
 		ProcessBlock( mbsevt );
-		
+
 	} // loop - mbsevt < MBS_EVENTS
 	
 	// Close the file
