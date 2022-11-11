@@ -12,7 +12,7 @@ class FebexData : public TObject {
 public:
 
 	FebexData() {};
-	FebexData( unsigned long long t,
+	FebexData( unsigned long long t, unsigned long long id,
 			  unsigned int qi, Float16_t qh, unsigned short qs,
 			  std::vector<unsigned short> tr,
 			  unsigned char s, unsigned char b, unsigned char c,
@@ -20,6 +20,7 @@ public:
 	~FebexData() {};
 
 	inline unsigned long long	GetTime() { return time; };
+	inline unsigned long long	GetEventID() { return eventid; };
 	inline unsigned short		GetTraceLength() { return trace.size(); };
 	inline unsigned short		GetQshort() { return Qshort; };
 	inline Float16_t			GetQhalf() { return Qhalf; };
@@ -53,6 +54,7 @@ public:
 	};
 	
 	inline void	SetTime( unsigned long long t ) { time = t; };
+	inline void	SetEventID( unsigned long long id ) { eventid = id; };
 	inline void	SetTrace( std::vector<unsigned short> t ) { trace = t; };
 	inline void AddSample( unsigned short s ) { trace.push_back(s); };
 	inline void	SetQshort( unsigned short q ) { Qshort = q; };
@@ -73,6 +75,7 @@ public:
 protected:
 	
 	unsigned long long			time;
+	unsigned long long			eventid;
 	float						energy;
 	unsigned int				Qint;		///< Charge from firmware as 32-bit integer
 	Float16_t					Qhalf;		///< Charge from firmware as 16-bit float
@@ -87,7 +90,7 @@ protected:
 	bool						pileup;		///< pileup flag from data stream
 
 	
-	ClassDef( FebexData, 3 )
+	ClassDef( FebexData, 4 )
 	
 };
 
@@ -96,15 +99,17 @@ class InfoData : public TObject {
 public:
 
 	InfoData() {};
-	InfoData( unsigned long long t, unsigned char s, unsigned char b, unsigned char m );
+	InfoData( unsigned long long t, unsigned long long id, unsigned char s, unsigned char b, unsigned char m );
 	~InfoData() {};
 	
 	inline unsigned long long	GetTime(){ return time; };
+	inline unsigned long long	GetEventID(){ return eventid; };
 	inline unsigned char 		GetCode(){ return code; };
 	inline unsigned char		GetSfp(){ return sfp; };
 	inline unsigned char		GetBoard(){ return board; };
 
 	inline void SetTime( unsigned long long t ){ time = t; };
+	inline void SetEventID( unsigned long long id ){ eventid = id; };
 	inline void SetCode( unsigned char c ){ code = c; };
 	inline void SetSfp( unsigned char s ){ sfp = s; };
 	inline void SetBoard( unsigned char b ){ board = b; };
@@ -113,10 +118,11 @@ public:
 
 protected:
 	
-	unsigned long long	time;	///< timestamp of info event
-	unsigned char		code;	///< code here represents which information timestamp we have
-	unsigned char		sfp;	///< SFP ID of the event
-	unsigned char		board;	///< board ID of the event
+	unsigned long long	time;		///< timestamp of info event
+	unsigned long long	eventid;	///< timestamp of info event
+	unsigned char		code;		///< code here represents which information timestamp we have
+	unsigned char		sfp;		///< SFP ID of the event
+	unsigned char		board;		///< board ID of the event
 	/// code = 20 is external pulser event for whatever reason
 	/// code = 21 is EBIS proton timestamp
 	/// code = 22 is T1 timestamp
@@ -144,6 +150,7 @@ public:
 	inline std::shared_ptr<InfoData> GetInfoData() { return std::make_shared<InfoData>( info_packets.at(0) ); };
 	
 	// Complicated way to get the time...
+	unsigned long long GetEventID();
 	unsigned long long GetTime();
 	UInt_t GetTimeMSB();
 	UInt_t GetTimeLSB();
