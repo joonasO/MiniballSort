@@ -368,7 +368,7 @@ void MiniballMbsConverter::FinishFebexData(){
 		
 		flag_febex_info = true;
 		my_info_code = 20; // Pulser is always 20 (defined here)
-		hfebex_ext->Fill( ctr_febex_ext, febex_data->GetTime(), 1 );
+		hfebex_ext->Fill( ctr_febex_ext, time_corr, 1 );
 		ctr_febex_ext++;
 		
 	}

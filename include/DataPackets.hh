@@ -12,14 +12,14 @@ class FebexData : public TObject {
 public:
 
 	FebexData() {};
-	FebexData( unsigned long long t, unsigned long long id,
+	FebexData( long long t, unsigned long long id,
 			  unsigned int qi, Float16_t qh, unsigned short qs,
 			  std::vector<unsigned short> tr,
 			  unsigned char s, unsigned char b, unsigned char c,
 			  bool th, bool v, bool f, bool p );
 	~FebexData() {};
 
-	inline unsigned long long	GetTime() { return time; };
+	inline long long			GetTime() { return time; };
 	inline unsigned long long	GetEventID() { return eventid; };
 	inline unsigned short		GetTraceLength() { return trace.size(); };
 	inline unsigned short		GetQshort() { return Qshort; };
@@ -53,7 +53,7 @@ public:
 		return trace.at(i);
 	};
 	
-	inline void	SetTime( unsigned long long t ) { time = t; };
+	inline void	SetTime( long long t ) { time = t; };
 	inline void	SetEventID( unsigned long long id ) { eventid = id; };
 	inline void	SetTrace( std::vector<unsigned short> t ) { trace = t; };
 	inline void AddSample( unsigned short s ) { trace.push_back(s); };
@@ -74,7 +74,7 @@ public:
 
 protected:
 	
-	unsigned long long			time;
+	long long					time;
 	unsigned long long			eventid;
 	float						energy;
 	unsigned int				Qint;		///< Charge from firmware as 32-bit integer
@@ -90,7 +90,7 @@ protected:
 	bool						pileup;		///< pileup flag from data stream
 
 	
-	ClassDef( FebexData, 4 )
+	ClassDef( FebexData, 5 )
 	
 };
 
@@ -99,16 +99,16 @@ class InfoData : public TObject {
 public:
 
 	InfoData() {};
-	InfoData( unsigned long long t, unsigned long long id, unsigned char s, unsigned char b, unsigned char m );
+	InfoData( long long t, unsigned long long id, unsigned char s, unsigned char b, unsigned char m );
 	~InfoData() {};
 	
-	inline unsigned long long	GetTime(){ return time; };
+	inline long long			GetTime(){ return time; };
 	inline unsigned long long	GetEventID(){ return eventid; };
 	inline unsigned char 		GetCode(){ return code; };
 	inline unsigned char		GetSfp(){ return sfp; };
 	inline unsigned char		GetBoard(){ return board; };
 
-	inline void SetTime( unsigned long long t ){ time = t; };
+	inline void SetTime( long long t ){ time = t; };
 	inline void SetEventID( unsigned long long id ){ eventid = id; };
 	inline void SetCode( unsigned char c ){ code = c; };
 	inline void SetSfp( unsigned char s ){ sfp = s; };
@@ -118,7 +118,7 @@ public:
 
 protected:
 	
-	unsigned long long	time;		///< timestamp of info event
+	long long			time;		///< timestamp of info event
 	unsigned long long	eventid;	///< timestamp of info event
 	unsigned char		code;		///< code here represents which information timestamp we have
 	unsigned char		sfp;		///< SFP ID of the event
@@ -128,7 +128,7 @@ protected:
 	/// code = 22 is T1 timestamp
 
 	
-	ClassDef( InfoData, 10 )
+	ClassDef( InfoData, 11 )
 	
 };
 
@@ -151,7 +151,7 @@ public:
 	
 	// Complicated way to get the time...
 	unsigned long long GetEventID();
-	unsigned long long GetTime();
+	long long GetTime();
 	UInt_t GetTimeMSB();
 	UInt_t GetTimeLSB();
 
