@@ -1320,7 +1320,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 			if( info_data->GetCode() == set->GetEBISCode() &&
 				TMath::Abs( (double)ebis_time - (double)info_data->GetTime() ) > 1e3 ) {
 				
-				ebis_time = info_data->GetTime();
+				ebis_time = mytime;
 				ebis_T = (double)ebis_time - (double)ebis_prev;
 				ebis_f = 1e9 / ebis_T;
 				if( ebis_prev != 0 ) {
@@ -1336,7 +1336,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 			if( info_data->GetCode() == set->GetT1Code() &&
 				TMath::Abs( (double)t1_time - (double)info_data->GetTime() ) > 1e3 ){
 				
-				t1_time = info_data->GetTime();
+				t1_time = mytime;
 				t1_T = (double)t1_time - (double)t1_prev;
 				t1_f = 1e9 / t1_T;
 				if( t1_prev != 0 ) {
@@ -1352,7 +1352,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 			if( info_data->GetCode() == set->GetSCCode() &&
 				TMath::Abs( (double)sc_time - (double)info_data->GetTime() ) > 1e3 ){
 				
-				sc_time = info_data->GetTime();
+				sc_time = mytime;
 				sc_T = (double)sc_time - (double)sc_prev;
 				sc_f = 1e9 / sc_T;
 				if( sc_prev != 0 ) {
@@ -1367,7 +1367,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 			// Update pulser time
 			if( info_data->GetCode() == set->GetPulserCode() ) {
 				
-				pulser_time = info_data->GetTime();
+				pulser_time = mytime;
 				pulser_T = (double)pulser_time - (double)pulser_prev;
 				pulser_f = 1e9 / pulser_T;
 				if( pulser_prev != 0 ) {
@@ -1387,7 +1387,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 
 					n_pause[info_data->GetSfp()][info_data->GetBoard()]++;
 					flag_pause[info_data->GetSfp()][info_data->GetBoard()] = true;
-					pause_time[info_data->GetSfp()][info_data->GetBoard()] = info_data->GetTime();
+					pause_time[info_data->GetSfp()][info_data->GetBoard()] = mytime;
 				
 				}
 				
@@ -1408,7 +1408,7 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 				
 					n_resume[info_data->GetSfp()][info_data->GetBoard()]++;
 					flag_resume[info_data->GetSfp()][info_data->GetBoard()] = true;
-					resume_time[info_data->GetSfp()][info_data->GetBoard()] = info_data->GetTime();
+					resume_time[info_data->GetSfp()][info_data->GetBoard()] = mytime;
 					
 					// Work out the dead time
 					febex_dead_time[info_data->GetSfp()][info_data->GetBoard()] += resume_time[info_data->GetSfp()][info_data->GetBoard()];
