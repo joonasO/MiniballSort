@@ -1148,10 +1148,10 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 						break;
 					}
 					
-					// Panic if we failed!
-					std::cerr << "Didn't find matching MBS Event IDs at start of the file: ";
-					std::cerr << myeventid << std::endl;
-					
+					if( j+1 == mbsinfo_tree->GetEntries() ) {
+						std::cerr << "Didn't find matching MBS Event IDs at start of the file: ";
+						std::cerr << myeventid << std::endl;
+					}
 				}
 				
 			}
@@ -1493,9 +1493,12 @@ unsigned long MiniballEventBuilder::BuildEvents() {
 							break;
 						}
 						
-						// Panic if we failed!
-						std::cerr << "Didn't find matching MBS Event IDs at start of the file: ";
-						std::cerr << myeventid << std::endl;
+						// Panic if failed
+						if( j+1 == mbsinfo_tree->GetEntries() ) {
+							std::cerr << "Didn't find matching MBS Event IDs in file: ";
+							std::cerr << myeventid << std::endl;
+						}
+
 					}
 					
 				}
