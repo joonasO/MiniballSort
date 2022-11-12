@@ -278,7 +278,8 @@ void MiniballMbsConverter::ProcessFebexData( UInt_t &pos ) {
 
 			// Make a FebexData item
 			febex_data->SetQint( mwd.GetEnergy(i) );
-			febex_data->SetTime( my_tm_stp + mwd.GetCfdTime(i) );
+			//febex_data->SetTime( my_tm_stp + mwd.GetCfdTime(i) );
+			febex_data->SetTime( mwd.GetCfdTime(i) );
 			febex_data->SetEventID( my_event_id );
 			febex_data->SetSfp( my_sfp_id );
 			febex_data->SetBoard( my_board_id );
@@ -355,7 +356,7 @@ bool MiniballMbsConverter::GetFebexChanID( unsigned int x ){
 void MiniballMbsConverter::FinishFebexData(){
 	
 	// Timestamp with offset
-	unsigned long long time_corr;
+	long long time_corr;
 	time_corr  = febex_data->GetTime();
 	time_corr += cal->FebexTime( febex_data->GetSfp(), febex_data->GetBoard(), febex_data->GetChannel() );
 
